@@ -5,7 +5,7 @@ import atexit
 
 #Add your Cloudant service credentials here
 cloudant_username = 'e23f5812-bc31-47f5-a6f0-38121f779220-bluemix'
-cloudant_api_key = '5JjvPHXLotX_DKM6rvgtoIC4eHy0_k-3f-pJKX_0KiRu'
+# cloudant_api_key = '5JjvPHXLotX_DKM6rvgtoIC4eHy0_k-3f-pJKX_0KiRu'
 cloudant_url = 'https://e23f5812-bc31-47f5-a6f0-38121f779220-bluemix.cloudantnosqldb.appdomain.cloud'
 client = Cloudant.iam(cloudant_username, cloudant_api_key, connect=True, url=cloudant_url)
 
