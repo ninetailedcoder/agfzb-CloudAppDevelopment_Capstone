@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import CarMake, CarModel,CarDealer
-from .restapis import get_dealers_from_cf, get_request, get_dealer_reviews_from_cf, post_request    
+from .models import CarMake, CarModel, CarDealer
+from .restapis import get_dealers_from_cf, get_request, get_dealer_reviews_from_cf, post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -26,18 +26,20 @@ def about(request):
 
 
 # Create a `contact` view to return a static contact page
-#def contact(request):
+# def contact(request):
 def contact(request):
-    context={}
+    context = {}
     if request.method == "GET":
         return render(request, 'djangoapp/contact.html', context)
 
 # Create a `login_request` view to handle sign in request
 # def login_request(request):
 # ...
+
+
 def login_request(request):
     context = {}
-    
+
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -48,11 +50,13 @@ def login_request(request):
         else:
             return redirect("djangoapp:login")
     else:
-        return redirect(request, 'djangoapp/login', context) 
+        return redirect(request, 'djangoapp/login', context)
 
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
 # ...
+
+
 def logout_request(request):
     print("Log out the user `{}`".format(request.user.username))
     logout(request)
@@ -60,6 +64,8 @@ def logout_request(request):
 # Create a `registration_request` view to handle sign up request
 # def registration_request(request):
 # ...
+
+
 def registration_request(request):
     context = {}
     if request.method == "GET":
@@ -77,15 +83,18 @@ def registration_request(request):
             logger.debug('{} is new user'.format(username))
         if not user_exist:
 
-            user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name)
+            user = User.objects.create_user(
+                username=username, password=password, first_name=first_name, last_name=last_name)
             login(request, user)
             return redirect("djangoapp:index")
         else:
             return redirect("djangoapp:registration", context)
 
 # Update the `get_dealerships` view to render the index page with a list of dealerships
+
+
 def get_dealerships(request):
-    context={}
+    context = {}
     if request.method == "GET":
         url = "https://torydemaio-3000.theiadocker-2-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
         # Get dealers from the URL
@@ -98,13 +107,15 @@ def get_dealerships(request):
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
 # ...
+
+
 def get_dealer_details(request, dealer_id):
-    context ={}
+    context = {}
     if request.method == "GET":
         url = "https://torydemaio-3000.theiadocker-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/reviews/get"
         # Get dealers from the URL
-        reviews= get_dealer_reviews_from_cf(url, dealer_id)
-        context["reviews"]=reviews
+        reviews = get_dealer_reviews_from_cf(url, dealer_id)
+        context["reviews"] = reviews
         print(context["reviews"])
         # Concat all dealer's short name
         # Return a list of dealer short name
@@ -113,33 +124,37 @@ def get_dealer_details(request, dealer_id):
 # def add_review(request, dealer_id):
 # check if the user is authenticated
 # ...
-def add_review(request, dealer_id):
-   context={}
-   if request.method == "GET":
-    dealersid = dealer_id
-    context ={"cars": models.CarModel.objects.all(),
-              "dealers": restapis.get_dealers_from_cf(url),
-              }
-    return render(request, 'djangoapp/add_review.html', context)
-   if request.method == "POST":
-    if request.user.is_authenticated:
-        form = request.POST
-        review = {
-            "name": "{request.user.first_name} {request.user.last_name}",
-            "dealership": dealer_id,
-            "review": form["content"],
-            "purchase": form["purchasecheck"],
-        }
-        if form.get("purchasechek"):
-            review["purchase_date"] = datetime.strptime(form["purchasedate"], "%m/%d/%Y").isoformat()
-            car = models.CarModel.objects.get(pk=form["car"])
-            review["car_make"] = car.car_make.name
-            review["car_model"] = car.name
-            review["car_year"] = car.year.strftime("%Y")
-        json_payload = {"review": review}
-        print(json_payload)
 
-        restapis.post_request(url, json_payload, dealerId=dealer_id)
-        return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
-    else:
-        return redirect("djangoapp:login")
+
+def add_review(request, dealer_id):
+    context = {}
+    if request.method == "GET":
+        dealersid = dealer_id
+        context = {"cars": models.CarModel.objects.all(),
+                   "dealers": restapis.get_dealers_from_cf(url),
+                   }
+        return render(request, 'djangoapp/add_review.html', context)
+    if request.method == "POST":
+        if request.user.is_authenticated:
+            form = request.POST
+            review = {
+                "name": "{request.user.first_name} {request.user.last_name}",
+                "dealership": dealer_id,
+                "review": form["content"],
+                "purchase": form["purchasecheck"],
+                "time": datetime.utcnow().isoformat(),
+            }
+            if form.get("purchasechek"):
+                review["purchase_date"] = datetime.strptime(
+                    form["purchasedate"], "%m/%d/%Y").isoformat()
+                car = models.CarModel.objects.get(pk=form["car"])
+                review["car_make"] = car.car_make.name
+                review["car_model"] = car.name
+                review["car_year"] = car.year.strftime("%Y")
+            json_payload = {"review": review}
+            print(json_payload)
+
+            restapis.post_request(url, json_payload, dealerId=dealer_id)
+            return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
+        else:
+            return redirect("djangoapp:login")
