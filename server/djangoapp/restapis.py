@@ -11,6 +11,7 @@ from ibm_watson.natural_language_understanding_v1 import Features, SentimentOpti
 def get_request(url, **kwargs):
     print(kwargs)
     print("GET from {} ".format(url))
+    api_key = "5JjvPHXLotX_DKM6rvgtoIC4eHy0_k-3f-pJKX_0KiRu"
     if api_key:
         # Call get method of requests library with URL and parameters
         response = requests.get(url, headers={'Content-Type': 'application/json'},
@@ -61,24 +62,31 @@ def get_dealers_from_cf(url, **kwargs):
 # - Parse JSON results into a DealerView object list
 def get_dealer_reviews_from_cf(url, dealerId):
     results = []
-    json_result = get_request(url, dealerId=dealerId)
-    if json_result:
-        reviews = json_result
-        print(reviews)
-        for review in reviews:
-            review_obj = DealerReview(
-                dealership=review["dealership"],
-                name=review["name"],
-                purchase=review["purchase"],
-                review=review["review"],
-                purchase_date=review["purchase_date"],
-                car_make=review["car_make"],
-                car_model=review["car_model"],
-                car_year=review["car_year"],
-                sentiment=analyze_review_sentiments(review),
-                id=review["id"]
-            )
-            results.append(review_obj)
+    # Update the URL to include the 'id' parameter
+    params = {'id': dealerId}
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        json_result = response.json()
+        if json_result:
+            reviews = json_result
+            print(reviews)
+            for review in reviews:
+                dealership= get_dealer_reviews_from_cf(url, dealerId)
+                sentiment = analyze_review_sentiments(review['review'])  # Pass the review text to the sentiment analysis function
+                review_obj = DealerReview(
+                    dealership=dealership,
+                    name=review["name"],
+                    purchase=review["purchase"],
+                    review=review["review"],
+                    purchase_date=review["purchase_date"],
+                    car_make=review["car_make"],
+                    car_model=review["car_model"],
+                    car_year=review["car_year"],
+                    sentiment=sentiment,
+                    id=review["id"]
+                )
+                results.append(review_obj)
     return results
 
     
@@ -101,19 +109,32 @@ def post_request(url, json_payload, **kwargs):
 # def analyze_review_sentiments(text):
 # - Call get_request() with specified arguments
 # - Get the returned sentiment label such as Positive or Negative
-def analyze_review_sentiments(dealerreview):
-    # get the returned sentiment label such as Positive or Negative return the label
-    # get the returned sentiment label such as Positive or Negative
-    # return the label
-    # authenticator = IAMAuthenticator('A9mE5XKyAsN86hRjokieEUWJY5lvM9se2dOUO53qtrGu')
+import json
+from ibm_watson import NaturalLanguageUnderstandingV1
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_watson.natural_language_understanding_v1 import Features, SentimentOptions
+
+def analyze_review_sentiments(review_text):
+    # Create an authenticator using your API key
+    authenticator = IAMAuthenticator('A9mE5XKyAsN86hRjokieEUWJY5lvM9se2dOUO53qtrGu')
+
+    # Create a Natural Language Understanding instance
     natural_language_understanding = NaturalLanguageUnderstandingV1(
         version='2021-03-25',
         authenticator=authenticator
     )
+
+    # Set the service URL for your specific NLU instance
     natural_language_understanding.set_service_url('https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/instances/418516ec-f40e-4170-9d1e-753554e86dc9')
+
+    # Analyze the sentiment of the review text
     response = natural_language_understanding.analyze(
-        text=dealerreview.review,
-        features=Features(sentiment=SentimentOptions())).get_result()
-    print(json.dumps(response, indent=2))
+        text=review_text,
+        features=Features(sentiment=SentimentOptions())
+    ).get_result()
+
+    # Extract the sentiment label
     sentiment = response["sentiment"]["document"]["label"]
+    
     return sentiment
+

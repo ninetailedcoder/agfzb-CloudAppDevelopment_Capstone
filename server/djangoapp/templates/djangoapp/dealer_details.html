@@ -7,12 +7,33 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
-    <body>
+<body>
 
-    <!--Add a nav bar here -->
+<!-- Add a nav bar here -->
+{% include 'nav_bar.html' %}
 
-    <!-- Add reviews as cards -->
+<!-- Add reviews as cards -->
+<h1>Reviews for </h1>
+    {% for review in reviews %}
+        <!-- check if user is authenticated -->
+        {% if not user.is_authenticated %}
+            <p>Please <a href="#login">login</a> to add a review</p> 
+            <!-- display reviews as cards -->
+            {% else %}
+            <a href="{% url 'djangoapp:add_review' dealer.id %}">Add a review</a>
+        {% endif %}
+            <div class="card" style="width: 18rem;">
+                <!-- use the images from the following path static/media/emoji -->
+                <img src="{{MEDIA_URL}}/emoji/{{review.sentiment}}.png" class="card-img-left" alt="sentiment">
+                <div class="card-body">
+                        <!-- create several card titles that display the car model name, make, and purchase year. -->
+                    <h5 class="card-title">{{review.car_model}}</h5>
+                    <p class="card-text">{{review.purchase_date}}</p>
+                    <p class="card-text">Review: {{review.review}}</p>
+                </div>
+            </div>
+    {% endfor %}   
 
-    </body>
+</body>
 
 </html>

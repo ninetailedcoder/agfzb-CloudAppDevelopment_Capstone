@@ -22,7 +22,7 @@
     {% block content %}
     <h1></br>Our dealerships</h3>
     <!-- Dealer table -->
-    <table class="table" id="table" data-filter-control="true">
+    <table class="table" id="table" data-filter-control="true" data-filter-show-clear="true">
         <thead>
             <tr>
                 <th data-field="id">ID</th>
@@ -30,7 +30,8 @@
                 <th data-field="city">City</th>
                 <th data-field="address">Address</th>
                 <th data-field="zip">Zip</th>
-                <th data-field="state">State</th>
+                <th data-filter-control="select" data-field="state">State
+                </th>
             </tr>
         </thead>
         <tbody>
