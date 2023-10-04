@@ -50,7 +50,7 @@ def login_request(request):
         else:
             return redirect("djangoapp:login")
     else:
-        return redirect(request, 'djangoapp/login', context)
+        return redirect(request, 'djangoapp:login', context)
 
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
@@ -96,7 +96,7 @@ def registration_request(request):
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
-        url = "https://torydemaio-3000.theiadocker-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        url = "https://torydemaio-3000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
         # Get dealers from the URL
         context["dealerships"] = get_dealers_from_cf(url)
         # Concat all dealer's short name
@@ -112,11 +112,19 @@ def get_dealerships(request):
 def get_dealer_details(request, dealer_id):
     context = {}
     if request.method == "GET":
-        url = "https://torydemaio-5000.theiadocker-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/get_reviews"
+        url = "https://torydemaio-5000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/get_reviews"
         # Get dealers from the URL
         reviews = get_dealer_reviews_from_cf(url, dealer_id)
+        url2 = "https://torydemaio-3000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        dealers= get_dealers_from_cf(url2)
+        context["dealers"] = dealers
         context["reviews"] = reviews
         print(context["reviews"])
+        for dealer in dealers:
+            if dealer.id == dealer_id:
+                context["dealer"] = dealer
+        # get dealer by id
+        
         # Concat all dealer's short name
         # Return a list of dealer short name
         return render(request, 'djangoapp/dealer_details.html', context)
@@ -128,33 +136,30 @@ def get_dealer_details(request, dealer_id):
 
 def add_review(request, dealer_id):
     context = {}
+    cars = CarModel.objects.all()
+    context["cars"] = cars
     if request.method == "GET":
-        dealersid = dealer_id
-        context = {"cars": models.CarModel.objects.all(),
-                   "dealers": restapis.get_dealers_from_cf(url),
-                   }
-        return render(request, 'djangoapp/add_review.html', context)
-    if request.method == "POST":
-        if request.user.is_authenticated:
-            form = request.POST
-            review = {
-                "name": "{request.user.first_name} {request.user.last_name}",
-                "dealership": dealer_id,
-                "review": form["content"],
-                "purchase": form["purchasecheck"],
-                "time": datetime.utcnow().isoformat(),
-            }
-            if form.get("purchasechek"):
-                review["purchase_date"] = datetime.strptime(
-                    form["purchasedate"], "%m/%d/%Y").isoformat()
-                car = models.CarModel.objects.get(pk=form["car"])
-                review["car_make"] = car.car_make.name
-                review["car_model"] = car.name
-                review["car_year"] = car.year.strftime("%Y")
-            json_payload = {"review": review}
-            print(json_payload)
-
-            restapis.post_request(url, json_payload, dealerId=dealer_id)
-            return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
-        else:
-            return redirect("djangoapp:login")
+        url = "https://torydemaio-3000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf(url)
+        for dealer in dealerships:
+            if dealer.id == dealer_id:
+                context["dealer"] = dealer
+        return render(request, 'djangoapp/add_review.html', {'dealer_id': dealer_id, 'context': context})
+    elif request.method == "POST":
+        form = request.POST
+        review = {}
+        review["name"] = request.user.first_name + " " + request.user.last_name
+        review["dealership"] = dealer_id
+        review["review"] = form["content"]
+        review["purchase"] = form.get("purchasecheck") is not None
+        review["purchase_date"] = datetime.strptime(
+            form["purchasedate"], "%m/%d/%Y").isoformat()
+        car = CarModel.objects.get(pk=form["car"])
+        review["car_make"] = car.make.name
+        review["car_model"] = car.name
+        review["car_year"] = car.year.strftime("%Y")
+        json_payload = {"review": review}
+        url = "https://torydemaio-5000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
+        post_request(url, json_payload, dealerId=dealer_id)
+        return redirect("djangoapp:dealer_details", dealer_id=dealer_id)

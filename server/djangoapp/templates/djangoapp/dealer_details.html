@@ -13,26 +13,27 @@
 {% include 'nav_bar.html' %}
 
 <!-- Add reviews as cards -->
-<h1>Reviews for </h1>
-    {% for review in reviews %}
-        <!-- check if user is authenticated -->
-        {% if not user.is_authenticated %}
-            <p>Please <a href="#login">login</a> to add a review</p> 
-            <!-- display reviews as cards -->
-            {% else %}
-            <a href="{% url 'djangoapp:add_review' dealer.id %}">Add a review</a>
-        {% endif %}
-            <div class="card" style="width: 18rem;">
-                <!-- use the images from the following path static/media/emoji -->
-                <img src="{{MEDIA_URL}}/emoji/{{review.sentiment}}.png" class="card-img-left" alt="sentiment">
-                <div class="card-body">
-                        <!-- create several card titles that display the car model name, make, and purchase year. -->
-                    <h5 class="card-title">{{review.car_model}}</h5>
-                    <p class="card-text">{{review.purchase_date}}</p>
-                    <p class="card-text">Review: {{review.review}}</p>
-                </div>
-            </div>
-    {% endfor %}   
+<!-- print Reviews for "dealership name"-->
+<h1>Reviews for {{dealer.full_name}}</h1>
+
+{% if user.is_authenticated %}
+    <a href="{% url 'djangoapp:add_review' dealer.id %}" class="btn btn-primary">Add a review</a>
+{% else %}
+    <p>Please <a href="#login">login</a> to add a review</p>
+{% endif %}
+
+{% for review in reviews %}
+    <div class="card" style="width: 18rem;">
+        <!-- use the images from the following path static/media/emoji -->
+        <img src="{{MEDIA_URL}}/emoji/{{review.sentiment}}.png" class="card-img-left" style="width: 40px; height: 40px;" alt="sentiment">
+        <div class="card-body">
+            <!-- create several card titles that display the car model name, make, and purchase year. -->
+            <h5 class="card-title">{{review.car_model}}</h5>
+            <p class="card-text">{{review.purchase_date}}</p>
+            <p class="card-text">Review: {{review.review}}</p>
+        </div>
+    </div>
+{% endfor %}
 
 </body>
 

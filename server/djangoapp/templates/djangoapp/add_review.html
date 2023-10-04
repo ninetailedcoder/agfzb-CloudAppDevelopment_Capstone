@@ -8,9 +8,43 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.js"></script>
-
 </head>
-    <body>
-    <!--Add review form here -->
-    </body>
+<body>
+    <!-- Add review form with an action pointing to django:add_review post request -->
+    <h1>Add a review about </h1>
+    <form action="{% url 'djangoapp:add_review' dealer_id %}" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="content">Enter the Review Content:</label>
+            <textarea class="form-control" id="content" name="content" rows="4" required placeholder="Enter your review..."></textarea>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="purchasecheck" id="purchasecheck">
+            <label class="form-check-label" for="purchasecheck">Did you purchase a vehicle from here before?</label>
+        </div>
+
+        <div class="form-group">
+            <label for="car">Car:</label>
+            <select name="car" id="car" class="form-control" required>
+                {% for car in cars %}
+                    <option value="{{ car.name }}">{{ car.name }} - {{ car.make.name }} - {{ car.year|date:"Y" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="purchasedate">Purchase Date:</label>
+            <input class="date-own form-control" type="text" name="purchasedate" id="purchasedate" placeholder="MM/DD/YYYY">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <script type="text/javascript">
+        $('.date-own').datepicker({
+           format: 'mm/dd/yyyy'
+         });
+    </script>
+</body>
 </html>
